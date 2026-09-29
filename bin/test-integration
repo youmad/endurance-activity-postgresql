@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+readonly PACKAGE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly COMPOSE_FILE="${PACKAGE_ROOT}/tests/Support/docker-compose.integration.yml"
+readonly PROJECT_NAME="endurance-activity-postgresql-test-${BASHPID}"
+
+cd "${PACKAGE_ROOT}"
+
+if [[ ! -x vendor/bin/phpunit || ! -x vendor/bin/doctrine-migrations ]]; then
+    printf 'Install development dependencies with composer install before running integration tests.\n' >&2
+    exit 69
+fi
+
+mode="${TRACKER_TEST_DATABASE_MODE:-docker}"
+
+case "${mode}" in
+    docker)
+        if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>&1; then
+            printf 'Docker Compose is required for the integration test database.\n' >&2
+            exit 69
+        fi
+
+        export TRACKER_TEST_DATABASE_HOST=127.0.0.1
+        export TRACKER_TEST_DATABASE_PORT="${TRACKER_TEST_DATABASE_PORT:-55432}"
+        ;;
+    external)
+        if [[ -z "${TRACKER_TEST_DATABASE_HOST:-}" ]]; then
+            printf 'Set TRACKER_TEST_DATABASE_HOST for an external test database.\n' >&2
+            exit 64
+        fi
+
+        export TRACKER_TEST_DATABASE_PORT="${TRACKER_TEST_DATABASE_PORT:-5432}"
+        ;;
+    *)
+        printf 'TRACKER_TEST_DATABASE_MODE must be docker or external.\n' >&2
+        exit 64
+        ;;
+esac
+
+export TRACKER_TEST_DATABASE_NAME="${TRACKER_TEST_DATABASE_NAME:-tracker_activity_test}"
+export TRACKER_TEST_DATABASE_USER="${TRACKER_TEST_DATABASE_USER:-tracker}"
+
+if [[ ! "${TRACKER_TEST_DATABASE_NAME}" =~ (^test([_-]|$)|[_-]test$) ]]; then
+    printf 'Refusing to migrate and truncate database %s: use a dedicated name beginning with test or ending with _test.\n' \
+        "${TRACKER_TEST_DATABASE_NAME}" >&2
+    exit 64
+fi
+
+if [[ ! "${TRACKER_TEST_DATABASE_PORT}" =~ ^[0-9]+$ ]] \
+    || (( TRACKER_TEST_DATABASE_PORT < 1 || TRACKER_TEST_DATABASE_PORT > 65535 )); then
+    printf 'TRACKER_TEST_DATABASE_PORT must be a valid TCP port.\n' >&2
+    exit 64
+fi
+
+password_file_owned=0
+database_started=0
+
+compose() {
+    docker compose --project-name "${PROJECT_NAME}" --file "${COMPOSE_FILE}" "$@"
+}
+
+cleanup() {
+    local status=$?
+
+    if (( database_started == 1 )); then
+        if (( status != 0 )); then
+            compose logs --no-color postgres >&2 || true
+        fi
+
+        if [[ "${KEEP_TEST_DATABASE:-0}" == 1 && ${status} -ne 0 ]]; then
+            printf '\nTest database retained. Stop it with:\n' >&2
+            printf 'docker compose --project-name %q --file %q down --volumes --remove-orphans\n' \
+                "${PROJECT_NAME}" "${COMPOSE_FILE}" >&2
+
+            if (( password_file_owned == 1 )); then
+                printf 'Then remove the temporary password file: rm -f -- %q\n' \
+                    "${TRACKER_TEST_DATABASE_PASSWORD_FILE}" >&2
+            fi
+
+            password_file_owned=0
+        else
+            compose down --volumes --remove-orphans >/dev/null 2>&1 || true
+        fi
+    fi
+
+    if (( password_file_owned == 1 )); then
+        rm -f -- "${TRACKER_TEST_DATABASE_PASSWORD_FILE}"
+    fi
+}
+
+if [[ -n "${TRACKER_TEST_DATABASE_PASSWORD_FILE:-}" ]]; then
+    if [[ ! -r "${TRACKER_TEST_DATABASE_PASSWORD_FILE}" ]]; then
+        printf 'Test database password file is not readable.\n' >&2
+        exit 66
+    fi
+else
+    export TRACKER_TEST_DATABASE_PASSWORD_FILE="$(mktemp)"
+    password_file_owned=1
+    trap cleanup EXIT
+    printf '%s' "${TRACKER_TEST_DATABASE_PASSWORD:-tracker}" \
+        > "${TRACKER_TEST_DATABASE_PASSWORD_FILE}"
+    chmod 600 "${TRACKER_TEST_DATABASE_PASSWORD_FILE}"
+fi
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+export TRACKER_TEST_DATABASE_PASSWORD="$(cat -- "${TRACKER_TEST_DATABASE_PASSWORD_FILE}")"
+
+if [[ -z "${TRACKER_TEST_DATABASE_PASSWORD}" ]]; then
+    printf 'Test database password must not be empty.\n' >&2
+    exit 64
+fi
+
+export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_HOST="${TRACKER_TEST_DATABASE_HOST}"
+export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PORT="${TRACKER_TEST_DATABASE_PORT}"
+export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_DB="${TRACKER_TEST_DATABASE_NAME}"
+export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_USER="${TRACKER_TEST_DATABASE_USER}"
+export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PASSWORD="${TRACKER_TEST_DATABASE_PASSWORD}"
+
+if [[ "${mode}" == docker ]]; then
+    database_started=1
+    compose up --detach --wait postgres
+fi
+
+vendor/bin/doctrine-migrations migrate --no-interaction
+vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite integration "$@"

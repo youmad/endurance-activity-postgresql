@@ -1,0 +1,80 @@
+{
+  "name": "youmad/endurance-activity-postgresql",
+  "description": "Doctrine DBAL adapters and migrations for PostgreSQL activity storage",
+  "type": "library",
+  "license": "MPL-2.0",
+  "require": {
+    "php": "^8.5",
+    "ext-pdo_pgsql": "*",
+    "doctrine/dbal": "^4.4",
+    "youmad/endurance-activity": "^0.1.0",
+    "youmad/endurance-foundation": "^0.1.1"
+  },
+  "require-dev": {
+    "doctrine/migrations": "^3.9",
+    "friendsofphp/php-cs-fixer": "^3.95.25",
+    "phpstan/phpstan": "^2.2.13",
+    "phpstan/phpstan-phpunit": "^2.0.18",
+    "phpunit/phpunit": "^12.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Youmad\\Endurance\\ActivityPostgresql\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Youmad\\Endurance\\ActivityPostgresql\\Tests\\": "tests/"
+    }
+  },
+  "archive": {
+    "exclude": [
+      "/vendor",
+      "/composer.lock",
+      "/phpunit.xml",
+      "/.phpunit.cache",
+      "/.phpunit.result.cache",
+      "/coverage",
+      "/.idea",
+      "/.vscode",
+      "/.php-cs-fixer.cache",
+      "/.phpstan.cache",
+      "/phpstan.neon",
+      "/.php-cs-fixer.php"
+    ]
+  },
+  "scripts": {
+    "test": "@test:unit",
+    "test:unit": "phpunit --configuration phpunit.xml.dist --testsuite unit",
+    "test:integration": "bash bin/test-integration",
+    "test:all": [
+      "@test:unit",
+      "@test:integration"
+    ],
+    "analyse": "@php vendor/bin/phpstan analyse --configuration=phpstan.dist.neon",
+    "cs:check": "@php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff",
+    "cs:fix": "@php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php",
+    "check": [
+      "@composer validate --strict",
+      "@test:all",
+      "@analyse",
+      "@cs:check"
+    ]
+  },
+  "scripts-descriptions": {
+    "test": "Run fast unit tests",
+    "test:unit": "Run unit tests",
+    "test:integration": "Run Doctrine PostgreSQL integration tests",
+    "test:all": "Run unit and Doctrine PostgreSQL integration tests",
+    "analyse": "Analyse package source, migrations and tests with PHPStan",
+    "cs:check": "Check PHP formatting",
+    "cs:fix": "Apply PHP formatting",
+    "check": "Validate Composer configuration, run tests and check static analysis and formatting"
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "phpstan/extension-installer": true
+    }
+  }
+}

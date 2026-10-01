@@ -34,6 +34,7 @@ final class DoctrineDbalActivityRepository implements ActivityRepository
                         SELECT
                             id::text,
                             started_at::text,
+                            timer_started_at::text,
                             finished_at::text,
                             last_observation_at::text,
                             last_lap_finished_at::text,
@@ -72,6 +73,7 @@ final class DoctrineDbalActivityRepository implements ActivityRepository
             /** @var array{
              *     id: string,
              *     started_at: string,
+             *     timer_started_at: ?string,
              *     finished_at: ?string,
              *     last_observation_at: ?string,
              *     last_lap_finished_at: ?string,
@@ -113,6 +115,7 @@ final class DoctrineDbalActivityRepository implements ActivityRepository
                         INSERT INTO activities (
                             id,
                             started_at,
+                            timer_started_at,
                             finished_at,
                             last_observation_at,
                             last_lap_finished_at,
@@ -131,6 +134,7 @@ final class DoctrineDbalActivityRepository implements ActivityRepository
                         ) VALUES (
                             :id,
                             :started_at,
+                            :timer_started_at,
                             :finished_at,
                             :last_observation_at,
                             :last_lap_finished_at,
@@ -208,6 +212,7 @@ final class DoctrineDbalActivityRepository implements ActivityRepository
                         UPDATE activities
                         SET
                             started_at = :started_at,
+                            timer_started_at = :timer_started_at,
                             finished_at = :finished_at,
                             last_observation_at = :last_observation_at,
                             last_lap_finished_at = :last_lap_finished_at,

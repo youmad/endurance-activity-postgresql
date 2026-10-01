@@ -87,6 +87,21 @@ final class DoctrineDbalActivityRepositoryTest extends TestCase
         }
     }
 
+    public function testPersistsInitialTimerStartAcrossTransactions(): void
+    {
+        $activity = Activity::start($this->instant('2026-01-15T10:00:00Z'));
+        self::assertTrue($this->activities->createIfAbsent($activity));
+        $activity->confirmTimerStartedAt($this->instant('2026-01-15T10:00:03Z'));
+        $activity->pause($this->instant('2026-01-15T10:00:20Z'));
+        $this->transaction->run(fn (): null => $this->saveAndReturnNull($activity));
+        $restored = $this->activities->get($activity->id);
+        self::assertTrue($restored->timerStartedAt?->equals($activity->timerStartedAt));
+        $restored->resume($this->instant('2026-01-15T10:00:25Z'));
+        $restored->finish($this->instant('2026-01-15T10:01:00Z'));
+        $this->transaction->run(fn (): null => $this->saveAndReturnNull($restored));
+        self::assertSame(52_000_000, $this->activities->get($activity->id)->timerDuration()?->toMicroseconds());
+    }
+
     public function testPersistsAndRestoresCompleteAggregateState(): void
     {
         $activity = $this->completeActivity();

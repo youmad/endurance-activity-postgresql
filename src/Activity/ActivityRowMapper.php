@@ -16,6 +16,7 @@ final readonly class ActivityRowMapper
      * @param array{
      *     id: string,
      *     started_at: string,
+     *     timer_started_at?: ?string,
      *     finished_at: ?string,
      *     last_observation_at: ?string,
      *     last_lap_finished_at: ?string,
@@ -42,6 +43,7 @@ final readonly class ActivityRowMapper
                 startedAt: $this->requiredInstant(
                     $row['started_at'],
                 ),
+                timerStartedAt: $this->optionalInstant($row['timer_started_at'] ?? null),
                 finishedAt: $this->optionalInstant(
                     $row['finished_at'],
                 ),
@@ -105,6 +107,7 @@ final readonly class ActivityRowMapper
         return [
             'id' => $snapshot->id->toString(),
             'started_at' => $this->instant($snapshot->startedAt),
+            'timer_started_at' => $this->nullableInstant($snapshot->timerStartedAt),
             'finished_at' => $this->nullableInstant(
                 $snapshot->finishedAt,
             ),

@@ -93,8 +93,10 @@ composer check
 
 By default, integration tests use Docker to start a disposable PostgreSQL 18
 database. To use a dedicated existing test database, set
-`TRACKER_TEST_DATABASE_MODE=external` and the `TRACKER_TEST_DATABASE_*` connection
-variables described in [bin/test-integration](bin/test-integration). The runner
+`ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_MODE=external` and
+`ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST`. Optional connection settings
+use the same prefix: `PORT`, `NAME`, `USER`, `PASSWORD` and `PASSWORD_FILE`;
+see [bin/test-integration](bin/test-integration) for defaults. The runner
 applies migrations, and the suite truncates application tables between tests.
 
 ## License

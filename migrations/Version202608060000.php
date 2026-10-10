@@ -20,7 +20,7 @@ final class Version202608060000 extends AbstractMigration
         $this->abortIf(
             !$this->connection->getDatabasePlatform()
                 instanceof PostgreSQLPlatform,
-            'Tracker activity storage supports PostgreSQL only.',
+            'Endurance Activity storage supports PostgreSQL only.',
         );
 
         foreach (self::upStatements() as $statement) {
@@ -33,7 +33,7 @@ final class Version202608060000 extends AbstractMigration
         $this->abortIf(
             !$this->connection->getDatabasePlatform()
                 instanceof PostgreSQLPlatform,
-            'Tracker activity storage supports PostgreSQL only.',
+            'Endurance Activity storage supports PostgreSQL only.',
         );
 
         foreach (self::downStatements() as $statement) {

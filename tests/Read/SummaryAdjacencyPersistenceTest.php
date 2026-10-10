@@ -43,15 +43,14 @@ final class SummaryAdjacencyPersistenceTest extends TestCase
         int $nextStart,
         bool $allowed,
     ): void {
-        $factory = $lap ? Lap::create(...) : ActivitySession::create(...);
-        $summaries = [
-            $factory($this->at(0), $this->at(10), Duration::fromMicroseconds(1_000_000), adjacencyPolicy: $policy, timelineResolution: $resolution),
-            $factory($this->at($nextStart), $this->at(30), Duration::fromMicroseconds(1_000_000), adjacencyPolicy: $policy, timelineResolution: $resolution),
-        ];
+        $factory = fn (int $start, int $finish) => $lap
+            ? Lap::create($this->at($start), $this->at($finish), Duration::fromMicroseconds(1_000_000), adjacencyPolicy: $policy, timelineResolution: $resolution)
+            : ActivitySession::create($this->at($start), $this->at($finish), Duration::fromMicroseconds(1_000_000), adjacencyPolicy: $policy, timelineResolution: $resolution);
+        $summaries = [$factory(0, 10), $factory($nextStart, 30)];
         $activity = Activity::start($this->at(0));
         try {
             foreach ($summaries as $summary) {
-                if ($lap) {
+                if ($summary instanceof Lap) {
                     $activity->recordLap($summary);
                 } else {
                     $activity->recordSession($summary);
@@ -65,7 +64,7 @@ final class SummaryAdjacencyPersistenceTest extends TestCase
         $encoder = new ActivityImportPayloadEncoder();
         $rows = [];
         foreach ($summaries as $summary) {
-            $json = $lap ? $encoder->lap($summary) : $encoder->session($summary);
+            $json = $summary instanceof Lap ? $encoder->lap($summary) : $encoder->session($summary);
             $payload = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
             self::assertSame($policy->value, $payload['adjacency_policy']);
             $rows[] = [

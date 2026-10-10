@@ -32,11 +32,11 @@ final class DoctrineDbalActivityReadRepositoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $host = getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_HOST');
+        $host = getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST');
 
         if (false === $host || '' === $host) {
             self::markTestSkipped(
-                'Set TRACKER_ACTIVITY_POSTGRES_DOCTRINE_HOST to run PostgreSQL integration tests.',
+                'Set ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST to run PostgreSQL integration tests.',
             );
         }
 
@@ -44,14 +44,14 @@ final class DoctrineDbalActivityReadRepositoryTest extends TestCase
             'driver' => 'pdo_pgsql',
             'host' => $host,
             'port' => (int) (
-                getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PORT') ?: 5432
+                getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT') ?: 5432
             ),
-            'dbname' => getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_DB')
-                ?: 'tracker_activity_test',
-            'user' => getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_USER')
-                ?: 'tracker',
-            'password' => getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PASSWORD')
-                ?: 'tracker',
+            'dbname' => getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_NAME')
+                ?: 'endurance_activity_test',
+            'user' => getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_USER')
+                ?: 'endurance',
+            'password' => getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD')
+                ?: 'endurance',
         ]);
         $this->resetDatabase();
         $this->activities = new DoctrineDbalActivityReadRepository(

@@ -13,7 +13,7 @@ if [[ ! -x vendor/bin/phpunit || ! -x vendor/bin/doctrine-migrations ]]; then
     exit 69
 fi
 
-mode="${TRACKER_TEST_DATABASE_MODE:-docker}"
+mode="${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_MODE:-docker}"
 
 case "${mode}" in
     docker)
@@ -22,35 +22,35 @@ case "${mode}" in
             exit 69
         fi
 
-        export TRACKER_TEST_DATABASE_HOST=127.0.0.1
-        export TRACKER_TEST_DATABASE_PORT="${TRACKER_TEST_DATABASE_PORT:-55432}"
+        export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST=127.0.0.1
+        export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT="${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT:-55432}"
         ;;
     external)
-        if [[ -z "${TRACKER_TEST_DATABASE_HOST:-}" ]]; then
-            printf 'Set TRACKER_TEST_DATABASE_HOST for an external test database.\n' >&2
+        if [[ -z "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST:-}" ]]; then
+            printf 'Set ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST for an external test database.\n' >&2
             exit 64
         fi
 
-        export TRACKER_TEST_DATABASE_PORT="${TRACKER_TEST_DATABASE_PORT:-5432}"
+        export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT="${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT:-5432}"
         ;;
     *)
-        printf 'TRACKER_TEST_DATABASE_MODE must be docker or external.\n' >&2
+        printf 'ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_MODE must be docker or external.\n' >&2
         exit 64
         ;;
 esac
 
-export TRACKER_TEST_DATABASE_NAME="${TRACKER_TEST_DATABASE_NAME:-tracker_activity_test}"
-export TRACKER_TEST_DATABASE_USER="${TRACKER_TEST_DATABASE_USER:-tracker}"
+export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_NAME="${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_NAME:-endurance_activity_test}"
+export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_USER="${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_USER:-endurance}"
 
-if [[ ! "${TRACKER_TEST_DATABASE_NAME}" =~ (^test([_-]|$)|[_-]test$) ]]; then
+if [[ ! "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_NAME}" =~ (^test([_-]|$)|[_-]test$) ]]; then
     printf 'Refusing to migrate and truncate database %s: use a dedicated name beginning with test or ending with _test.\n' \
-        "${TRACKER_TEST_DATABASE_NAME}" >&2
+        "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_NAME}" >&2
     exit 64
 fi
 
-if [[ ! "${TRACKER_TEST_DATABASE_PORT}" =~ ^[0-9]+$ ]] \
-    || (( TRACKER_TEST_DATABASE_PORT < 1 || TRACKER_TEST_DATABASE_PORT > 65535 )); then
-    printf 'TRACKER_TEST_DATABASE_PORT must be a valid TCP port.\n' >&2
+if [[ ! "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT}" =~ ^[0-9]+$ ]] \
+    || (( ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT < 1 || ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT > 65535 )); then
+    printf 'ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT must be a valid TCP port.\n' >&2
     exit 64
 fi
 
@@ -76,7 +76,7 @@ cleanup() {
 
             if (( password_file_owned == 1 )); then
                 printf 'Then remove the temporary password file: rm -f -- %q\n' \
-                    "${TRACKER_TEST_DATABASE_PASSWORD_FILE}" >&2
+                    "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE}" >&2
             fi
 
             password_file_owned=0
@@ -86,40 +86,34 @@ cleanup() {
     fi
 
     if (( password_file_owned == 1 )); then
-        rm -f -- "${TRACKER_TEST_DATABASE_PASSWORD_FILE}"
+        rm -f -- "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE}"
     fi
 }
 
-if [[ -n "${TRACKER_TEST_DATABASE_PASSWORD_FILE:-}" ]]; then
-    if [[ ! -r "${TRACKER_TEST_DATABASE_PASSWORD_FILE}" ]]; then
+if [[ -n "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE:-}" ]]; then
+    if [[ ! -r "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE}" ]]; then
         printf 'Test database password file is not readable.\n' >&2
         exit 66
     fi
 else
-    export TRACKER_TEST_DATABASE_PASSWORD_FILE="$(mktemp)"
+    export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE="$(mktemp)"
     password_file_owned=1
     trap cleanup EXIT
-    printf '%s' "${TRACKER_TEST_DATABASE_PASSWORD:-tracker}" \
-        > "${TRACKER_TEST_DATABASE_PASSWORD_FILE}"
-    chmod 600 "${TRACKER_TEST_DATABASE_PASSWORD_FILE}"
+    printf '%s' "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD:-endurance}" \
+        > "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE}"
+    chmod 600 "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE}"
 fi
 
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-export TRACKER_TEST_DATABASE_PASSWORD="$(cat -- "${TRACKER_TEST_DATABASE_PASSWORD_FILE}")"
+export ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD="$(cat -- "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD_FILE}")"
 
-if [[ -z "${TRACKER_TEST_DATABASE_PASSWORD}" ]]; then
+if [[ -z "${ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD}" ]]; then
     printf 'Test database password must not be empty.\n' >&2
     exit 64
 fi
-
-export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_HOST="${TRACKER_TEST_DATABASE_HOST}"
-export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PORT="${TRACKER_TEST_DATABASE_PORT}"
-export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_DB="${TRACKER_TEST_DATABASE_NAME}"
-export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_USER="${TRACKER_TEST_DATABASE_USER}"
-export TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PASSWORD="${TRACKER_TEST_DATABASE_PASSWORD}"
 
 if [[ "${mode}" == docker ]]; then
     database_started=1

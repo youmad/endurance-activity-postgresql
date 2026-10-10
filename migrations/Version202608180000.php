@@ -20,7 +20,7 @@ final class Version202608180000 extends AbstractMigration
         $this->abortIf(
             !$this->connection->getDatabasePlatform()
                 instanceof PostgreSQLPlatform,
-            'Tracker activity storage supports PostgreSQL only.',
+            'Endurance Activity storage supports PostgreSQL only.',
         );
 
         $this->addSql(
@@ -33,7 +33,7 @@ final class Version202608180000 extends AbstractMigration
         $this->abortIf(
             !$this->connection->getDatabasePlatform()
                 instanceof PostgreSQLPlatform,
-            'Tracker activity storage supports PostgreSQL only.',
+            'Endurance Activity storage supports PostgreSQL only.',
         );
 
         $this->addSql(

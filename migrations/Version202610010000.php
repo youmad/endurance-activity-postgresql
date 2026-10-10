@@ -19,7 +19,7 @@ final class Version202610010000 extends AbstractMigration
     {
         $this->abortIf(
             !$this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform,
-            'Tracker activity storage supports PostgreSQL only.',
+            'Endurance Activity storage supports PostgreSQL only.',
         );
         $this->addSql('ALTER TABLE activities ADD COLUMN timer_started_at timestamptz NULL');
         $this->addSql(
@@ -41,7 +41,7 @@ final class Version202610010000 extends AbstractMigration
     {
         $this->abortIf(
             !$this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform,
-            'Tracker activity storage supports PostgreSQL only.',
+            'Endurance Activity storage supports PostgreSQL only.',
         );
         $this->addSql('ALTER TABLE activities DROP CONSTRAINT chk_activities_timer_start');
         $this->addSql('ALTER TABLE activities DROP COLUMN timer_started_at');

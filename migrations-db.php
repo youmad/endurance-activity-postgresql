@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 // This configuration is used only by the package's integration test runner.
-$database = getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_DB');
-$host = getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_HOST');
+$database = getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_NAME');
+$host = getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_HOST');
 
 if (false === $database
     || !preg_match('/(^test([_-]|$)|[_-]test$)/', $database)
@@ -16,8 +16,8 @@ if (false === $database
 return [
     'driver' => 'pdo_pgsql',
     'host' => $host,
-    'port' => (int) (getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PORT') ?: 5432),
+    'port' => (int) (getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PORT') ?: 5432),
     'dbname' => $database,
-    'user' => getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_USER') ?: 'tracker',
-    'password' => getenv('TRACKER_ACTIVITY_POSTGRES_DOCTRINE_PASSWORD') ?: 'tracker',
+    'user' => getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_USER') ?: 'endurance',
+    'password' => getenv('ENDURANCE_ACTIVITY_POSTGRESQL_TEST_DATABASE_PASSWORD') ?: 'endurance',
 ];
